@@ -845,15 +845,23 @@ impl Path {
         let extensions = graph.outgoing_edges(self.end_node);
         result.reserve(extensions.size_hint().0);
         for extension in extensions {
+            copious_debugging!("    Extend {}", self.display(graph, paths));
+            copious_debugging!("      with {}", graph[extension.sink].display(graph));
             let mut new_path = self.clone();
             // If there are errors adding this edge to the path, or resolving the resulting path,
             // just skip the edge — it's not a fatal error.
-            if new_path.append(graph, paths, extension).is_err() {
-                continue;
+            #[cfg_attr(not(feature = "copious-debugging"), allow(unused_variables))]
+            {
+                if let Err(err) = new_path.append(graph, paths, extension) {
+                    copious_debugging!("        is invalid: {:?}", err);
+                    continue;
+                }
+                if let Err(err) = new_path.resolve(graph, paths) {
+                    copious_debugging!("        is invalid: cannot resolve: {:?}", err);
+                    continue;
+                }
             }
-            if new_path.resolve(graph, paths).is_err() {
-                continue;
-            }
+            copious_debugging!("        is {}", new_path.display(graph, paths));
             result.push(new_path);
         }
     }
@@ -874,13 +882,30 @@ impl Paths {
         I: IntoIterator<Item = Handle<Node>>,
         F: FnMut(&StackGraph, &mut Paths, Path),
     {
+        copious_debugging!("==> Start path finding algorithm");
         let mut cycle_detector = CycleDetector::new();
-        let mut queue = starting_nodes
-            .into_iter()
-            .filter_map(|node| Path::from_node(graph, self, node))
-            .collect::<VecDeque<_>>();
+        let mut queue = VecDeque::new();
+        for node in starting_nodes {
+            copious_debugging!("    Initial node {}", node.display(graph));
+            let mut path = match Path::from_node(graph, self, node) {
+                Some(path) => path,
+                None => {
+                    copious_debugging!("      Cannot convert to path");
+                    continue;
+                }
+            };
+            #[cfg_attr(not(feature = "copious-debugging"), allow(unused_variables))]
+            if let Err(err) = path.resolve(graph, self) {
+                copious_debugging!("    is invalid: cannot resolve: {:?}", err);
+                continue;
+            }
+            copious_debugging!("      is {}", path.display(graph, self));
+            queue.push_back(path);
+        }
         while let Some(path) = queue.pop_front() {
+            copious_debugging!("--> Candidate path {}", path.display(graph, self));
             if !cycle_detector.should_process_path(&path, |probe| probe.cmp(graph, self, &path)) {
+            {
                 continue;
             }
             path.extend(graph, self, &mut queue);

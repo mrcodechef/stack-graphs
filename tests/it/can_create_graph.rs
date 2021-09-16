@@ -15,6 +15,11 @@ fn class_field_through_function_parameter() {
 }
 
 #[test]
+fn chained_methods_python() {
+    let _: StackGraph = test_graphs::chained_methods_python::new();
+}
+
+#[test]
 fn cyclic_imports_python() {
     let _: StackGraph = test_graphs::cyclic_imports_python::new();
 }

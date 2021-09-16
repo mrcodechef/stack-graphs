@@ -10,6 +10,7 @@
 use stack_graphs::arena::Handle;
 use stack_graphs::graph::*;
 
+pub mod chained_methods_python;
 pub mod class_field_through_function_parameter;
 pub mod cyclic_imports_python;
 pub mod cyclic_imports_rust;

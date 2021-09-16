@@ -54,6 +54,27 @@ fn class_field_through_function_parameter() {
 }
 
 #[test]
+fn chained_methods_python() {
+    let graph = test_graphs::chained_methods_python::new();
+    check_jump_to_definition(
+        &graph,
+        &[
+            "[main.py(123) reference self] -> [main.py(125) definition self]",
+            "[main.py(133) reference self] -> [main.py(135) definition self]",
+            "[main.py(143) reference self] -> [main.py(145) definition self]",
+            "[main.py(153) reference self] -> [main.py(155) definition self]",
+            "[main.py(163) reference self] -> [main.py(165) definition self]",
+            "[main.py(261) reference Builder] -> [main.py(100) definition Builder]",
+            "[main.py(251) reference set_a] -> [main.py(120) definition set_a]",
+            "[main.py(241) reference set_b] -> [main.py(130) definition set_b]",
+            "[main.py(231) reference set_c] -> [main.py(140) definition set_c]",
+            "[main.py(221) reference set_d] -> [main.py(150) definition set_d]",
+            "[main.py(211) reference set_e] -> [main.py(160) definition set_e]",
+        ],
+    );
+}
+
+#[test]
 fn cyclic_imports_python() {
     let graph = test_graphs::cyclic_imports_python::new();
     check_jump_to_definition(

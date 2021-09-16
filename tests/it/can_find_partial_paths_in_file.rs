@@ -97,6 +97,149 @@ fn class_field_through_function_parameter() {
 }
 
 #[test]
+fn chained_methods_python() {
+    let graph = test_graphs::chained_methods_python::new();
+    check_partial_paths_in_file(
+        &graph,
+        "main.py",
+        // NOTE: Because everything in this example is local to one file, there aren't any partial
+        // paths involving the root node.
+        &[
+            //f
+            "<__main__,%1> ($1) [root] -> [main.py(0) definition __main__] <%1> ($1)",
+
+            "<__main__.Builder,%1> ($1) [root] -> [main.py(100) definition Builder] <%1> ($1)",
+
+            "<__main__.Builder.set_a,%1> ($1) [root] -> [main.py(120) definition set_a] <%1> ($1)",
+            "<__main__.Builder.set_b,%1> ($1) [root] -> [main.py(130) definition set_b] <%1> ($1)",
+            "<__main__.Builder.set_c,%1> ($1) [root] -> [main.py(140) definition set_c] <%1> ($1)",
+            "<__main__.Builder.set_d,%1> ($1) [root] -> [main.py(150) definition set_d] <%1> ($1)",
+            "<__main__.Builder.set_e,%1> ($1) [root] -> [main.py(160) definition set_e] <%1> ($1)",
+
+            "<%1> ($1) [main.py(122) exported scope] -> [main.py(125) definition self] <%1> ($1)",
+            "<%1> ($1) [main.py(132) exported scope] -> [main.py(135) definition self] <%1> ($1)",
+            "<%1> ($1) [main.py(142) exported scope] -> [main.py(145) definition self] <%1> ($1)",
+            "<%1> ($1) [main.py(152) exported scope] -> [main.py(155) definition self] <%1> ($1)",
+            "<%1> ($1) [main.py(162) exported scope] -> [main.py(165) definition self] <%1> ($1)",
+
+            "<%1> () [main.py(123) reference self] -> [main.py(125) definition self] <%1> ()",
+            "<%1> () [main.py(133) reference self] -> [main.py(135) definition self] <%1> ()",
+            "<%1> () [main.py(143) reference self] -> [main.py(145) definition self] <%1> ()",
+            "<%1> () [main.py(153) reference self] -> [main.py(155) definition self] <%1> ()",
+            "<%1> () [main.py(163) reference self] -> [main.py(165) definition self] <%1> ()",
+
+            // All of the references in our call chain at the end refer to the correct definitions.
+            "<%1> () [main.py(261) reference Builder] -> [main.py(100) definition Builder] <%1> ()",
+            "<%1> () [main.py(211) reference set_e] -> [main.py(160) definition set_e] <%1> ()",
+            "<%1> () [main.py(221) reference set_d] -> [main.py(150) definition set_d] <%1> ()",
+            "<%1> () [main.py(231) reference set_c] -> [main.py(140) definition set_c] <%1> ()",
+            "<%1> () [main.py(241) reference set_b] -> [main.py(130) definition set_b] <%1> ()",
+            "<%1> () [main.py(251) reference set_a] -> [main.py(120) definition set_a] <%1> ()",
+
+            "<.set_a,%1> ($1) [main.py(122) exported scope] -> [main.py(120) definition set_a] <%1> ()",
+            "<.set_a,%1> ($1) [main.py(132) exported scope] -> [main.py(120) definition set_a] <%1> ()",
+            "<.set_a,%1> ($1) [main.py(142) exported scope] -> [main.py(120) definition set_a] <%1> ()",
+            "<.set_a,%1> ($1) [main.py(152) exported scope] -> [main.py(120) definition set_a] <%1> ()",
+            "<.set_a,%1> ($1) [main.py(162) exported scope] -> [main.py(120) definition set_a] <%1> ()",
+
+            "<.set_b,%1> ($1) [main.py(122) exported scope] -> [main.py(130) definition set_b] <%1> ()",
+            "<.set_b,%1> ($1) [main.py(132) exported scope] -> [main.py(130) definition set_b] <%1> ()",
+            "<.set_b,%1> ($1) [main.py(142) exported scope] -> [main.py(130) definition set_b] <%1> ()",
+            "<.set_b,%1> ($1) [main.py(152) exported scope] -> [main.py(130) definition set_b] <%1> ()",
+            "<.set_b,%1> ($1) [main.py(162) exported scope] -> [main.py(130) definition set_b] <%1> ()",
+
+            //"<.set_c()/($2),%1> ($1) [main.py(122) exported scope] -> [main.py(145) definition self] <%1> ($2)",
+            //"<.set_c()/($2),%1> ($1) [main.py(132) exported scope] -> [main.py(145) definition self] <%1> ($2)",
+            //"<.set_c()/($2),%1> ($1) [main.py(142) exported scope] -> [main.py(145) definition self] <%1> ($2)",
+            //"<.set_c()/($2),%1> ($1) [main.py(152) exported scope] -> [main.py(145) definition self] <%1> ($2)",
+            //"<.set_c()/($2),%1> ($1) [main.py(162) exported scope] -> [main.py(145) definition self] <%1> ($2)",
+
+            "<.set_c,%1> ($1) [main.py(122) exported scope] -> [main.py(140) definition set_c] <%1> ()",
+            "<.set_c,%1> ($1) [main.py(132) exported scope] -> [main.py(140) definition set_c] <%1> ()",
+            "<.set_c,%1> ($1) [main.py(142) exported scope] -> [main.py(140) definition set_c] <%1> ()",
+            "<.set_c,%1> ($1) [main.py(152) exported scope] -> [main.py(140) definition set_c] <%1> ()",
+            "<.set_c,%1> ($1) [main.py(162) exported scope] -> [main.py(140) definition set_c] <%1> ()",
+
+            "<.set_d()/($2),%1> ($1) [main.py(122) exported scope] -> [main.py(155) definition self] <%1> ($2)",
+            "<.set_d()/($2),%1> ($1) [main.py(132) exported scope] -> [main.py(155) definition self] <%1> ($2)",
+            "<.set_d()/($2),%1> ($1) [main.py(142) exported scope] -> [main.py(155) definition self] <%1> ($2)",
+            "<.set_d()/($2),%1> ($1) [main.py(152) exported scope] -> [main.py(155) definition self] <%1> ($2)",
+            "<.set_d()/($2),%1> ($1) [main.py(162) exported scope] -> [main.py(155) definition self] <%1> ($2)",
+
+            "<.set_d,%1> ($1) [main.py(122) exported scope] -> [main.py(150) definition set_d] <%1> ()",
+            "<.set_d,%1> ($1) [main.py(132) exported scope] -> [main.py(150) definition set_d] <%1> ()",
+            "<.set_d,%1> ($1) [main.py(142) exported scope] -> [main.py(150) definition set_d] <%1> ()",
+            "<.set_d,%1> ($1) [main.py(152) exported scope] -> [main.py(150) definition set_d] <%1> ()",
+            "<.set_d,%1> ($1) [main.py(162) exported scope] -> [main.py(150) definition set_d] <%1> ()",
+
+            "<.set_e()/($2),%1> ($1) [main.py(122) exported scope] -> [main.py(165) definition self] <%1> ($2)",
+            "<.set_e()/($2),%1> ($1) [main.py(132) exported scope] -> [main.py(165) definition self] <%1> ($2)",
+            "<.set_e()/($2),%1> ($1) [main.py(142) exported scope] -> [main.py(165) definition self] <%1> ($2)",
+            "<.set_e()/($2),%1> ($1) [main.py(152) exported scope] -> [main.py(165) definition self] <%1> ($2)",
+            "<.set_e()/($2),%1> ($1) [main.py(162) exported scope] -> [main.py(165) definition self] <%1> ($2)",
+
+            "<.set_e,%1> ($1) [main.py(122) exported scope] -> [main.py(160) definition set_e] <%1> ()",
+            "<.set_e,%1> ($1) [main.py(132) exported scope] -> [main.py(160) definition set_e] <%1> ()",
+            "<.set_e,%1> ($1) [main.py(142) exported scope] -> [main.py(160) definition set_e] <%1> ()",
+            "<.set_e,%1> ($1) [main.py(152) exported scope] -> [main.py(160) definition set_e] <%1> ()",
+            "<.set_e,%1> ($1) [main.py(162) exported scope] -> [main.py(160) definition set_e] <%1> ()",
+
+            "<__main__.Builder()/($2).set_a,%1> ($1) [root] -> [main.py(120) definition set_a] <%1> ()",
+            "<__main__.Builder()/($2).set_b,%1> ($1) [root] -> [main.py(130) definition set_b] <%1> ()",
+            "<__main__.Builder()/($2).set_c,%1> ($1) [root] -> [main.py(140) definition set_c] <%1> ()",
+            "<__main__.Builder()/($2).set_d,%1> ($1) [root] -> [main.py(150) definition set_d] <%1> ()",
+            "<__main__.Builder()/($2).set_e,%1> ($1) [root] -> [main.py(160) definition set_e] <%1> ()",
+
+            //"<__main__.Builder()/($2).set_c()/($3),%1> ($1) [root] -> [main.py(145) definition self] <%1> ($3)",
+            "<__main__.Builder()/($2).set_d()/($3),%1> ($1) [root] -> [main.py(155) definition self] <%1> ($3)",
+            "<__main__.Builder()/($2).set_e()/($3),%1> ($1) [root] -> [main.py(165) definition self] <%1> ($3)",
+
+            "<__main__.Builder.set_a()/($2),%1> ($1) [root] -> [main.py(125) definition self] <%1> ($2)",
+            "<__main__.Builder.set_b()/($2),%1> ($1) [root] -> [main.py(135) definition self] <%1> ($2)",
+            "<__main__.Builder.set_c()/($2),%1> ($1) [root] -> [main.py(145) definition self] <%1> ($2)",
+            "<__main__.Builder.set_d()/($2),%1> ($1) [root] -> [main.py(155) definition self] <%1> ($2)",
+            "<__main__.Builder.set_e()/($2),%1> ($1) [root] -> [main.py(165) definition self] <%1> ($2)",
+
+            "<set_a,%1> ($1) [main.py(112) exported scope] -> [main.py(120) definition set_a] <%1> ($1)",
+            "<set_b,%1> ($1) [main.py(112) exported scope] -> [main.py(130) definition set_b] <%1> ($1)",
+            "<set_c,%1> ($1) [main.py(112) exported scope] -> [main.py(140) definition set_c] <%1> ($1)",
+            "<set_d,%1> ($1) [main.py(112) exported scope] -> [main.py(150) definition set_d] <%1> ($1)",
+            "<set_e,%1> ($1) [main.py(112) exported scope] -> [main.py(160) definition set_e] <%1> ($1)",
+
+            "<set_a()/($2),%1> ($1) [main.py(112) exported scope] -> [main.py(125) definition self] <%1> ($2)",
+            "<set_b()/($2),%1> ($1) [main.py(112) exported scope] -> [main.py(135) definition self] <%1> ($2)",
+            "<set_c()/($2),%1> ($1) [main.py(112) exported scope] -> [main.py(145) definition self] <%1> ($2)",
+            "<set_d()/($2),%1> ($1) [main.py(112) exported scope] -> [main.py(155) definition self] <%1> ($2)",
+            "<set_e()/($2),%1> ($1) [main.py(112) exported scope] -> [main.py(165) definition self] <%1> ($2)",
+
+            //"<set_b()/($2).set_a,%1> ($1) [main.py(112) exported scope] -> [main.py(120) definition set_a] <%1> ()",
+            //"<set_b()/($2).set_b,%1> ($1) [main.py(112) exported scope] -> [main.py(130) definition set_b] <%1> ()",
+            //"<set_b()/($2).set_c,%1> ($1) [main.py(112) exported scope] -> [main.py(140) definition set_c] <%1> ()",
+            //"<set_b()/($2).set_d,%1> ($1) [main.py(112) exported scope] -> [main.py(150) definition set_d] <%1> ()",
+            //"<set_b()/($2).set_e,%1> ($1) [main.py(112) exported scope] -> [main.py(160) definition set_e] <%1> ()",
+
+            "<set_c()/($2).set_a,%1> ($1) [main.py(112) exported scope] -> [main.py(120) definition set_a] <%1> ()",
+            "<set_c()/($2).set_b,%1> ($1) [main.py(112) exported scope] -> [main.py(130) definition set_b] <%1> ()",
+            "<set_c()/($2).set_c,%1> ($1) [main.py(112) exported scope] -> [main.py(140) definition set_c] <%1> ()",
+            "<set_c()/($2).set_d,%1> ($1) [main.py(112) exported scope] -> [main.py(150) definition set_d] <%1> ()",
+            "<set_c()/($2).set_e,%1> ($1) [main.py(112) exported scope] -> [main.py(160) definition set_e] <%1> ()",
+
+            "<set_d()/($2).set_a,%1> ($1) [main.py(112) exported scope] -> [main.py(120) definition set_a] <%1> ()",
+            "<set_d()/($2).set_b,%1> ($1) [main.py(112) exported scope] -> [main.py(130) definition set_b] <%1> ()",
+            "<set_d()/($2).set_c,%1> ($1) [main.py(112) exported scope] -> [main.py(140) definition set_c] <%1> ()",
+            "<set_d()/($2).set_d,%1> ($1) [main.py(112) exported scope] -> [main.py(150) definition set_d] <%1> ()",
+            "<set_d()/($2).set_e,%1> ($1) [main.py(112) exported scope] -> [main.py(160) definition set_e] <%1> ()",
+
+            "<set_e()/($2).set_a,%1> ($1) [main.py(112) exported scope] -> [main.py(120) definition set_a] <%1> ()",
+            "<set_e()/($2).set_b,%1> ($1) [main.py(112) exported scope] -> [main.py(130) definition set_b] <%1> ()",
+            "<set_e()/($2).set_c,%1> ($1) [main.py(112) exported scope] -> [main.py(140) definition set_c] <%1> ()",
+            "<set_e()/($2).set_d,%1> ($1) [main.py(112) exported scope] -> [main.py(150) definition set_d] <%1> ()",
+            "<set_e()/($2).set_e,%1> ($1) [main.py(112) exported scope] -> [main.py(160) definition set_e] <%1> ()",
+        ],
+    );
+}
+
+#[test]
 fn cyclic_imports_python() {
     let graph = test_graphs::cyclic_imports_python::new();
     check_partial_paths_in_file(
