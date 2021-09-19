@@ -35,8 +35,11 @@ use smallvec::SmallVec;
 
 use crate::arena::Handle;
 use crate::graph::Node;
+use crate::graph::Symbol;
 use crate::partial::PartialPath;
+use crate::partial::PartialPaths;
 use crate::paths::Path;
+use crate::paths::Paths;
 
 /// Helps detect cycles in the path-finding algorithm.
 pub struct CycleDetector<P> {
@@ -47,36 +50,67 @@ pub struct CycleDetector<P> {
 #[derive(Clone, Eq, Hash, PartialEq)]
 pub struct PathKey {
     start_node: Handle<Node>,
+    start_symbol_stack_head: Option<Handle<Symbol>>,
+    start_scope_stack_head: Option<Handle<Node>>,
     end_node: Handle<Node>,
+    end_symbol_stack_head: Option<Handle<Symbol>>,
+    end_scope_stack_head: Option<Handle<Node>>,
 }
 
 #[doc(hidden)]
 pub trait HasPathKey: Clone {
-    fn key(&self) -> PathKey;
     fn is_shorter_than(&self, other: &Self) -> bool;
 }
 
-impl HasPathKey for Path {
-    fn key(&self) -> PathKey {
+impl Path {
+    pub(crate) fn path_key(&self, paths: &Paths) -> PathKey {
+        let mut symbol_stack = self.symbol_stack;
+        let end_symbol_stack_head = symbol_stack.pop_front(paths).map(|symbol| symbol.symbol);
+        let mut scope_stack = self.scope_stack;
+        let end_scope_stack_head = scope_stack.pop_front(paths);
         PathKey {
             start_node: self.start_node,
+            start_symbol_stack_head: None,
+            start_scope_stack_head: None,
             end_node: self.end_node,
+            end_symbol_stack_head,
+            end_scope_stack_head,
         }
     }
+}
 
+impl HasPathKey for Path {
     fn is_shorter_than(&self, other: &Self) -> bool {
         self.edges.len() < other.edges.len() && self.symbol_stack.len() <= other.symbol_stack.len()
     }
 }
 
-impl HasPathKey for PartialPath {
-    fn key(&self) -> PathKey {
+impl PartialPath {
+    pub(crate) fn path_key(&self, partials: &mut PartialPaths) -> PathKey {
+        let mut symbol_stack_precondition = self.symbol_stack_precondition;
+        let start_symbol_stack_head = symbol_stack_precondition
+            .pop_front(partials)
+            .map(|symbol| symbol.symbol);
+        let mut scope_stack_precondition = self.scope_stack_precondition;
+        let start_scope_stack_head = scope_stack_precondition.pop_front(partials);
+        let mut symbol_stack_postcondition = self.symbol_stack_postcondition;
+        let end_symbol_stack_head = symbol_stack_postcondition
+            .pop_front(partials)
+            .map(|symbol| symbol.symbol);
+        let mut scope_stack_postcondition = self.scope_stack_postcondition;
+        let end_scope_stack_head = scope_stack_postcondition.pop_front(partials);
         PathKey {
             start_node: self.start_node,
+            start_symbol_stack_head,
+            start_scope_stack_head,
             end_node: self.end_node,
+            end_symbol_stack_head,
+            end_scope_stack_head,
         }
     }
+}
 
+impl HasPathKey for PartialPath {
     fn is_shorter_than(&self, other: &Self) -> bool {
         self.edges.len() < other.edges.len()
             && (self.symbol_stack_precondition.len() + self.symbol_stack_postcondition.len())
@@ -100,11 +134,10 @@ where
     /// Determines whether we should process this path during the path-finding algorithm.  If our
     /// heuristics decide that this path is a duplicate, or is "non-productive", then we return
     /// `false`, and the path-finding algorithm will skip this path.
-    pub fn should_process_path<F>(&mut self, path: &P, cmp: F) -> bool
+    pub fn should_process_path<F>(&mut self, key: PathKey, path: &P, cmp: F) -> bool
     where
         F: FnMut(&P) -> std::cmp::Ordering,
     {
-        let key = path.key();
         let paths_with_same_nodes = self.paths.entry(key).or_default();
         let index = match paths_with_same_nodes.binary_search_by(cmp) {
             // We've already seen this exact path before; no need to process it again.

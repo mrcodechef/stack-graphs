@@ -2392,7 +2392,10 @@ impl PartialPaths {
                 .map(|node| PartialPath::from_node(graph, self, node).unwrap()),
         );
         while let Some(path) = queue.pop_front() {
-            if !cycle_detector.should_process_path(&path, |probe| probe.cmp(graph, self, &path)) {
+            let key = path.path_key(self);
+            if !cycle_detector
+                .should_process_path(key, &path, |probe| probe.cmp(graph, self, &path))
+            {
                 continue;
             }
             path.extend_from_file(graph, self, file, &mut queue);

@@ -880,7 +880,10 @@ impl Paths {
             .filter_map(|node| Path::from_node(graph, self, node))
             .collect::<VecDeque<_>>();
         while let Some(path) = queue.pop_front() {
-            if !cycle_detector.should_process_path(&path, |probe| probe.cmp(graph, self, &path)) {
+            let key = path.path_key(self);
+            if !cycle_detector
+                .should_process_path(key, &path, |probe| probe.cmp(graph, self, &path))
+            {
                 continue;
             }
             path.extend(graph, self, &mut queue);

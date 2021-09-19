@@ -498,9 +498,10 @@ impl PathStitcher {
         copious_debugging!("==> Start phase {}", self.phase_number);
         std::mem::swap(&mut self.queue, &mut self.next_iteration);
         while let Some(path) = self.queue.pop_front() {
+            let key = path.path_key(paths);
             if !self
                 .cycle_detector
-                .should_process_path(&path, |probe| probe.cmp(graph, paths, &path))
+                .should_process_path(key, &path, |probe| probe.cmp(graph, paths, &path))
             {
                 continue;
             }
@@ -750,9 +751,10 @@ impl ForwardPartialPathStitcher {
                 "--> Candidate partial path {}",
                 partial_path.display(graph, partials)
             );
+            let key = partial_path.path_key(partials);
             if !self
                 .cycle_detector
-                .should_process_path(&partial_path, |probe| {
+                .should_process_path(key, &partial_path, |probe| {
                     probe.cmp(graph, partials, &partial_path)
                 })
             {
