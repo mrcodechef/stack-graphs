@@ -38,23 +38,30 @@ use crate::graph::Node;
 use crate::graph::Symbol;
 use crate::partial::PartialPath;
 use crate::partial::PartialPaths;
+use crate::partial::PartialScopeStack;
+use crate::partial::PartialSymbolStack;
 use crate::paths::Path;
 use crate::paths::Paths;
+use crate::paths::ScopeStack;
+use crate::paths::SymbolStack;
 
 /// Helps detect cycles in the path-finding algorithm.
 pub struct CycleDetector<P> {
     paths: HashMap<PathKey, SmallVec<[P; 8]>>,
 }
 
+#[derive(Clone, Eq, Hash, PartialEq)]
+struct Pair<T>(T, T);
+
 #[doc(hidden)]
 #[derive(Clone, Eq, Hash, PartialEq)]
 pub struct PathKey {
     start_node: Handle<Node>,
-    start_symbol_stack_head: Option<Handle<Symbol>>,
-    start_scope_stack_head: Option<Handle<Node>>,
+    start_symbol_stack_head: Pair<Option<Handle<Symbol>>>,
+    start_scope_stack_head: Pair<Option<Handle<Node>>>,
     end_node: Handle<Node>,
-    end_symbol_stack_head: Option<Handle<Symbol>>,
-    end_scope_stack_head: Option<Handle<Node>>,
+    end_symbol_stack_head: Pair<Option<Handle<Symbol>>>,
+    end_scope_stack_head: Pair<Option<Handle<Node>>>,
 }
 
 #[doc(hidden)]
@@ -62,19 +69,31 @@ pub trait HasPathKey: Clone {
     fn is_shorter_than(&self, other: &Self) -> bool;
 }
 
+impl SymbolStack {
+    fn path_key_head(mut self, paths: &Paths) -> Pair<Option<Handle<Symbol>>> {
+        let first = self.pop_front(paths).map(|symbol| symbol.symbol);
+        let second = self.pop_front(paths).map(|symbol| symbol.symbol);
+        Pair(first, second)
+    }
+}
+
+impl ScopeStack {
+    fn path_key_head(mut self, paths: &Paths) -> Pair<Option<Handle<Node>>> {
+        let first = self.pop_front(paths);
+        let second = self.pop_front(paths);
+        Pair(first, second)
+    }
+}
+
 impl Path {
     pub(crate) fn path_key(&self, paths: &Paths) -> PathKey {
-        let mut symbol_stack = self.symbol_stack;
-        let end_symbol_stack_head = symbol_stack.pop_front(paths).map(|symbol| symbol.symbol);
-        let mut scope_stack = self.scope_stack;
-        let end_scope_stack_head = scope_stack.pop_front(paths);
         PathKey {
             start_node: self.start_node,
-            start_symbol_stack_head: None,
-            start_scope_stack_head: None,
+            start_symbol_stack_head: Pair(None, None),
+            start_scope_stack_head: Pair(None, None),
             end_node: self.end_node,
-            end_symbol_stack_head,
-            end_scope_stack_head,
+            end_symbol_stack_head: self.symbol_stack.path_key_head(paths),
+            end_scope_stack_head: self.scope_stack.path_key_head(paths),
         }
     }
 }
@@ -85,27 +104,31 @@ impl HasPathKey for Path {
     }
 }
 
+impl PartialSymbolStack {
+    fn path_key_head(mut self, partials: &mut PartialPaths) -> Pair<Option<Handle<Symbol>>> {
+        let first = self.pop_front(partials).map(|symbol| symbol.symbol);
+        let second = self.pop_front(partials).map(|symbol| symbol.symbol);
+        Pair(first, second)
+    }
+}
+
+impl PartialScopeStack {
+    fn path_key_head(mut self, partials: &mut PartialPaths) -> Pair<Option<Handle<Node>>> {
+        let first = self.pop_front(partials);
+        let second = self.pop_front(partials);
+        Pair(first, second)
+    }
+}
+
 impl PartialPath {
     pub(crate) fn path_key(&self, partials: &mut PartialPaths) -> PathKey {
-        let mut symbol_stack_precondition = self.symbol_stack_precondition;
-        let start_symbol_stack_head = symbol_stack_precondition
-            .pop_front(partials)
-            .map(|symbol| symbol.symbol);
-        let mut scope_stack_precondition = self.scope_stack_precondition;
-        let start_scope_stack_head = scope_stack_precondition.pop_front(partials);
-        let mut symbol_stack_postcondition = self.symbol_stack_postcondition;
-        let end_symbol_stack_head = symbol_stack_postcondition
-            .pop_front(partials)
-            .map(|symbol| symbol.symbol);
-        let mut scope_stack_postcondition = self.scope_stack_postcondition;
-        let end_scope_stack_head = scope_stack_postcondition.pop_front(partials);
         PathKey {
             start_node: self.start_node,
-            start_symbol_stack_head,
-            start_scope_stack_head,
+            start_symbol_stack_head: self.symbol_stack_precondition.path_key_head(partials),
+            start_scope_stack_head: self.scope_stack_postcondition.path_key_head(partials),
             end_node: self.end_node,
-            end_symbol_stack_head,
-            end_scope_stack_head,
+            end_symbol_stack_head: self.symbol_stack_precondition.path_key_head(partials),
+            end_scope_stack_head: self.scope_stack_postcondition.path_key_head(partials),
         }
     }
 }
