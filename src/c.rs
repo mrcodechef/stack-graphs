@@ -1282,6 +1282,7 @@ pub struct sg_partial_path {
     pub scope_stack_precondition: sg_partial_scope_stack,
     pub scope_stack_postcondition: sg_partial_scope_stack,
     pub edges: sg_partial_path_edge_list,
+    pub steps: u32,
 }
 
 impl Into<PartialPath> for sg_partial_path {

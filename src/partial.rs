@@ -1870,6 +1870,7 @@ pub struct PartialPath {
     pub scope_stack_precondition: PartialScopeStack,
     pub scope_stack_postcondition: PartialScopeStack,
     pub edges: PartialPathEdgeList,
+    pub steps: u32,
 }
 
 impl PartialPath {
@@ -1918,6 +1919,7 @@ impl PartialPath {
             scope_stack_precondition,
             scope_stack_postcondition,
             edges: PartialPathEdgeList::empty(),
+            steps: 0,
         })
     }
 
@@ -2549,6 +2551,7 @@ impl PartialPath {
             lhs.edges.push_back(partials, edge);
         }
         lhs.end_node = rhs.end_node;
+        lhs.steps += 1;
         Ok(())
     }
 }
